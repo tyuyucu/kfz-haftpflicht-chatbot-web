@@ -13,9 +13,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔹 Next.js 16: cookies() ist async
     const cookieStore = await cookies();
     let sessionId = cookieStore.get("sessionId")?.value;
+
+    const isNewSession = !sessionId;
 
     if (!sessionId) {
       sessionId = crypto.randomUUID();
@@ -49,9 +50,20 @@ export async function POST(req: Request) {
 
     const data = await flowiseRes.json();
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       text: data.text ?? data.response ?? "Keine Antwort erhalten.",
     });
+
+    // 🔥 WICHTIG: Cookie setzen wenn neu
+    if (isNewSession) {
+      response.cookies.set("sessionId", sessionId, {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+      });
+    }
+
+    return response;
 
   } catch (err) {
     console.error("API ERROR:", err);
