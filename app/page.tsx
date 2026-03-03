@@ -5,7 +5,9 @@ import { useState } from "react";
 export default function Home() {
   const [mode, setMode] = useState<"QUIZ" | "LERNEN" | "SPARRING">("LERNEN");
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<{ role: string; text: string }[]>([]);
+  const [messages, setMessages] = useState<
+    { role: "user" | "assistant"; text: string }[]
+  >([]);
   const [loading, setLoading] = useState(false);
 
   async function send() {
@@ -16,20 +18,20 @@ export default function Home() {
     setMessages((m) => [...m, { role: "user", text }]);
     setLoading(true);
 
-    const payload = `[MODE:${mode}] ${text}`;
-
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: payload }),
+        body: JSON.stringify({
+          message: text,
+          mode: mode,
+        }),
       });
 
       const data = await res.json();
 
-      // Flowise liefert oft: { text: "..."} oder { answer: "..."} je nach Setup
       const answer =
-        data?.text ?? data?.answer ?? data?.response ?? JSON.stringify(data);
+        data?.text ?? data?.answer ?? data?.response ?? "Keine Antwort erhalten.";
 
       setMessages((m) => [...m, { role: "assistant", text: String(answer) }]);
     } catch (e) {
@@ -48,6 +50,7 @@ export default function Home() {
         Kfz-Haftpflicht Chatbot
       </h1>
 
+      {/* Mode Switch */}
       <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
         {(["LERNEN", "QUIZ", "SPARRING"] as const).map((m) => (
           <button
@@ -67,6 +70,7 @@ export default function Home() {
         ))}
       </div>
 
+      {/* Chat Window */}
       <div
         style={{
           border: "1px solid #333",
@@ -80,7 +84,7 @@ export default function Home() {
       >
         {messages.length === 0 ? (
           <div style={{ opacity: 0.7 }}>
-            Tippe eine Frage und sende sie. Modus wird als Prefix mitgeschickt.
+            Stelle eine Frage oder starte ein Quiz.
           </div>
         ) : (
           messages.map((msg, i) => (
@@ -92,12 +96,13 @@ export default function Home() {
         {loading && <div style={{ opacity: 0.7 }}>Antwort lädt…</div>}
       </div>
 
+      {/* Input */}
       <div style={{ display: "flex", gap: 8 }}>
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && send()}
-          placeholder="Deine Frage…"
+          placeholder="Deine Nachricht…"
           style={{
             flex: 1,
             padding: "10px 12px",
