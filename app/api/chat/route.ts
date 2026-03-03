@@ -1,26 +1,31 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
     const { message } = await req.json();
 
-    const response = await fetch(process.env.FLOWISE_PREDICTION_URL!, {
+    const flowiseRes = await fetch(process.env.FLOWISE_API_URL!, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.FLOWISE_API_KEY}`,
       },
       body: JSON.stringify({
         question: message,
+        chatHistory: [],
       }),
     });
 
-    const data = await response.json();
+    const data = await flowiseRes.json();
 
-    return NextResponse.json(data);
-  } catch (error) {
+    // Flowise liefert text zurück
+    return NextResponse.json({
+      text: data.text ?? "Keine Antwort erhalten.",
+    });
+
+  } catch (err) {
+    console.error("API ERROR:", err);
     return NextResponse.json(
-      { error: "Server error" },
+      { text: "Interner Serverfehler." },
       { status: 500 }
     );
   }
