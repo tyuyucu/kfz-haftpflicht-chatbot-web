@@ -13,15 +13,14 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔹 Session Handling (stabil pro User)
-    const cookieStore = cookies();
+    // 🔹 Next.js 16: cookies() ist async
+    const cookieStore = await cookies();
     let sessionId = cookieStore.get("sessionId")?.value;
 
     if (!sessionId) {
       sessionId = crypto.randomUUID();
     }
 
-    // 🔹 Flow Routing
     const flowiseUrl =
       mode === "QUIZ"
         ? process.env.FLOWISE_QUIZ_URL
@@ -31,7 +30,6 @@ export async function POST(req: Request) {
       throw new Error("Flowise URL nicht konfiguriert.");
     }
 
-    // 🔹 Request an Flowise
     const flowiseRes = await fetch(flowiseUrl, {
       method: "POST",
       headers: {
