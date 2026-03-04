@@ -59,6 +59,7 @@ export async function POST(req: Request) {
 
     const response = NextResponse.json({
       text: data.text ?? data.response ?? "Keine Antwort erhalten.",
+      sources: data.sourceDocuments ?? [],
     });
 
     // Session Cookie setzen

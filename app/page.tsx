@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 
+type Mode = "QUIZ" | "LERNEN" | "SPARRING";
+type ChatMsg = { role: "user" | "assistant"; text: string };
+
 export default function Home() {
-  const [mode, setMode] = useState<"QUIZ" | "LERNEN" | "SPARRING">("LERNEN");
+  const [mode, setMode] = useState<Mode>("LERNEN");
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<
-    { role: "user" | "assistant"; text: string }[]
-  >([]);
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [loading, setLoading] = useState(false);
 
   async function send() {
@@ -30,10 +31,27 @@ export default function Home() {
 
       const data = await res.json();
 
-      const answer =
+      const answer: string =
         data?.text ?? data?.answer ?? data?.response ?? "Keine Antwort erhalten.";
 
-      setMessages((m) => [...m, { role: "assistant", text: String(answer) }]);
+      // Quellen (nur wenn API sie liefert; typischerweise im LERNEN/RAG-Modus)
+      let sourcesText = "";
+      if (Array.isArray(data?.sources) && data.sources.length > 0) {
+        sourcesText =
+          "\n\nQuellen:\n" +
+          data.sources
+            .map((s: any) => {
+              const source = s?.metadata?.source ?? "Dokument";
+              const page = s?.metadata?.page ?? "?";
+              return `• ${source} (Seite ${page})`;
+            })
+            .join("\n");
+      }
+
+      setMessages((m) => [
+        ...m,
+        { role: "assistant", text: String(answer + sourcesText) },
+      ]);
     } catch (e) {
       setMessages((m) => [
         ...m,
@@ -50,7 +68,6 @@ export default function Home() {
         Kfz-Haftpflicht Chatbot
       </h1>
 
-      {/* Mode Switch */}
       <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
         {(["LERNEN", "QUIZ", "SPARRING"] as const).map((m) => (
           <button
@@ -70,7 +87,6 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Chat Window */}
       <div
         style={{
           border: "1px solid #333",
@@ -84,7 +100,7 @@ export default function Home() {
       >
         {messages.length === 0 ? (
           <div style={{ opacity: 0.7 }}>
-            Stelle eine Frage oder starte ein Quiz.
+            Tippe eine Frage und sende sie. (LERNEN zeigt optional Quellen.)
           </div>
         ) : (
           messages.map((msg, i) => (
@@ -96,7 +112,6 @@ export default function Home() {
         {loading && <div style={{ opacity: 0.7 }}>Antwort lädt…</div>}
       </div>
 
-      {/* Input */}
       <div style={{ display: "flex", gap: 8 }}>
         <input
           value={input}
