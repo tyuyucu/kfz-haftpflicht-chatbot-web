@@ -13,6 +13,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // Session Cookie lesen
     const cookieStore = await cookies();
     let sessionId = cookieStore.get("sessionId")?.value;
 
@@ -22,15 +23,17 @@ export async function POST(req: Request) {
       sessionId = crypto.randomUUID();
     }
 
-    // 🔹 Routing der drei Modi
+    // Flow Routing
     let flowiseUrl: string | undefined;
 
     if (mode === "QUIZ") {
       flowiseUrl = process.env.FLOWISE_QUIZ_URL;
-    } else if (mode === "SPARRING") {
+    } 
+    else if (mode === "SPARRING") {
       flowiseUrl = process.env.FLOWISE_SPARRING_URL;
-    } else {
-      // Default = LERNEN
+    } 
+    else {
+      // Default = Lernen (RAG)
       flowiseUrl = process.env.FLOWISE_RAG_URL;
     }
 
@@ -38,6 +41,7 @@ export async function POST(req: Request) {
       throw new Error("Flowise URL nicht konfiguriert.");
     }
 
+    // Anfrage an Flowise
     const flowiseRes = await fetch(flowiseUrl, {
       method: "POST",
       headers: {
@@ -57,12 +61,13 @@ export async function POST(req: Request) {
 
     const data = await flowiseRes.json();
 
+    // Antwort normalisieren
     const response = NextResponse.json({
       text: data.text ?? data.response ?? "Keine Antwort erhalten.",
-      sources: data.sourceDocuments ?? [],
+      sources: data.sourceDocuments ?? data?.metadata?.sourceDocuments ?? [],
     });
 
-    // Session Cookie setzen
+    // Session Cookie setzen (falls neu)
     if (isNewSession) {
       response.cookies.set("sessionId", sessionId, {
         httpOnly: true,
@@ -75,6 +80,7 @@ export async function POST(req: Request) {
 
   } catch (err) {
     console.error("API ERROR:", err);
+
     return NextResponse.json(
       { text: "Interner Serverfehler." },
       { status: 500 }
