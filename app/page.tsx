@@ -37,7 +37,7 @@ export default function Home() {
         data?.response ??
         "Keine Antwort erhalten.";
 
-      // ===== QUELLEN LOGIK (FLOWISE KOMPATIBEL) =====
+      // ===== Quellenlogik =====
 
       let sourcesText = "";
 
@@ -46,16 +46,29 @@ export default function Home() {
         data?.sources ??
         [];
 
-      if (Array.isArray(rawSources) && rawSources.length > 0) {
+      if (
+        mode === "LERNEN" &&
+        Array.isArray(rawSources) &&
+        rawSources.length > 0
+      ) {
         const uniqueSources = Array.from(
           new Map(
             rawSources.map((s: any) => {
-              const source =
+              const rawSource =
                 s?.metadata?.document ??
                 s?.metadata?.source ??
+                s?.metadata?.fileName ??
+                s?.metadata?.title ??
                 "Dokument";
 
-              const page = s?.metadata?.page ?? "?";
+              const source =
+                rawSource === "blob" ? "Dokument" : rawSource;
+
+              const page =
+                s?.metadata?.page ??
+                s?.metadata?.loc?.pageNumber ??
+                s?.metadata?.pageNumber ??
+                "?";
 
               return [`${source}-${page}`, { source, page }];
             })
@@ -121,16 +134,19 @@ export default function Home() {
       >
         {messages.length === 0 ? (
           <div style={{ opacity: 0.7 }}>
-            Tippe eine Frage und sende sie. (LERNEN zeigt optional Quellen.)
+            Tippe eine Frage und sende sie. (LERNEN zeigt Quellen.)
           </div>
         ) : (
           messages.map((msg, i) => (
             <div key={i} style={{ marginBottom: 10 }}>
               <b>{msg.role === "user" ? "Du" : "Bot"}:</b>{" "}
-              <span style={{ whiteSpace: "pre-wrap" }}>{msg.text}</span>
+              <span style={{ whiteSpace: "pre-wrap" }}>
+                {msg.text}
+              </span>
             </div>
           ))
         )}
+
         {loading && <div style={{ opacity: 0.7 }}>Antwort lädt…</div>}
       </div>
 
@@ -149,6 +165,7 @@ export default function Home() {
             color: "inherit",
           }}
         />
+
         <button
           onClick={send}
           disabled={loading}
