@@ -147,7 +147,7 @@ export default function Home() {
           ))
         )}
 
-        {loading && <div style={{ opacity: 0.7 }}>Antwort lädt…</div>}
+        {loading && <div style={{ opacity: 0.7 }}>Antwortet…</div>}
       </div>
 
       <div style={{ display: "flex", gap: 8 }}>
