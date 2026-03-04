@@ -32,19 +32,40 @@ export default function Home() {
       const data = await res.json();
 
       const answer: string =
-        data?.text ?? data?.answer ?? data?.response ?? "Keine Antwort erhalten.";
+        data?.text ??
+        data?.answer ??
+        data?.response ??
+        "Keine Antwort erhalten.";
 
-      // Quellen (nur wenn API sie liefert; typischerweise im LERNEN/RAG-Modus)
+      // ===== QUELLEN LOGIK (FLOWISE KOMPATIBEL) =====
+
       let sourcesText = "";
-      if (Array.isArray(data?.sources) && data.sources.length > 0) {
+
+      const rawSources =
+        data?.sourceDocuments ??
+        data?.sources ??
+        [];
+
+      if (Array.isArray(rawSources) && rawSources.length > 0) {
+        const uniqueSources = Array.from(
+          new Map(
+            rawSources.map((s: any) => {
+              const source =
+                s?.metadata?.document ??
+                s?.metadata?.source ??
+                "Dokument";
+
+              const page = s?.metadata?.page ?? "?";
+
+              return [`${source}-${page}`, { source, page }];
+            })
+          ).values()
+        ).slice(0, 3);
+
         sourcesText =
           "\n\nQuellen:\n" +
-          data.sources
-            .map((s: any) => {
-              const source = s?.metadata?.source ?? "Dokument";
-              const page = s?.metadata?.page ?? "?";
-              return `• ${source} (Seite ${page})`;
-            })
+          uniqueSources
+            .map((s: any) => `• ${s.source} (Seite ${s.page})`)
             .join("\n");
       }
 
@@ -105,7 +126,8 @@ export default function Home() {
         ) : (
           messages.map((msg, i) => (
             <div key={i} style={{ marginBottom: 10 }}>
-              <b>{msg.role === "user" ? "Du" : "Bot"}:</b> {msg.text}
+              <b>{msg.role === "user" ? "Du" : "Bot"}:</b>{" "}
+              <span style={{ whiteSpace: "pre-wrap" }}>{msg.text}</span>
             </div>
           ))
         )}
