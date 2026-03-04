@@ -22,10 +22,17 @@ export async function POST(req: Request) {
       sessionId = crypto.randomUUID();
     }
 
-    const flowiseUrl =
-      mode === "QUIZ"
-        ? process.env.FLOWISE_QUIZ_URL
-        : process.env.FLOWISE_RAG_URL;
+    // 🔹 Routing der drei Modi
+    let flowiseUrl: string | undefined;
+
+    if (mode === "QUIZ") {
+      flowiseUrl = process.env.FLOWISE_QUIZ_URL;
+    } else if (mode === "SPARRING") {
+      flowiseUrl = process.env.FLOWISE_SPARRING_URL;
+    } else {
+      // Default = LERNEN
+      flowiseUrl = process.env.FLOWISE_RAG_URL;
+    }
 
     if (!flowiseUrl) {
       throw new Error("Flowise URL nicht konfiguriert.");
@@ -54,7 +61,7 @@ export async function POST(req: Request) {
       text: data.text ?? data.response ?? "Keine Antwort erhalten.",
     });
 
-    // 🔥 WICHTIG: Cookie setzen wenn neu
+    // Session Cookie setzen
     if (isNewSession) {
       response.cookies.set("sessionId", sessionId, {
         httpOnly: true,
