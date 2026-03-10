@@ -5,6 +5,12 @@ import { useState } from "react";
 type Mode = "QUIZ" | "LERNEN" | "SPARRING";
 type ChatMsg = { role: "user" | "assistant"; text: string };
 
+function cleanValue(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const cleaned = value.trim().replace(/^"+|"+$/g, "");
+  return cleaned.length > 0 ? cleaned : null;
+}
+
 export default function Home() {
   const [mode, setMode] = useState<Mode>("LERNEN");
   const [input, setInput] = useState("");
@@ -25,7 +31,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: text,
-          mode: mode,
+          mode,
         }),
       });
 
@@ -39,33 +45,51 @@ export default function Home() {
 
       let sourcesText = "";
 
-      const rawSources =
-        data?.sources ??
-        data?.sourceDocuments ??
-        [];
+      const rawSources = data?.sources ?? data?.sourceDocuments ?? [];
 
-      if (
-        mode === "LERNEN" &&
-        Array.isArray(rawSources) &&
-        rawSources.length > 0
-      ) {
+      if (mode === "LERNEN" && Array.isArray(rawSources) && rawSources.length > 0) {
         const uniqueSources = Array.from(
           new Map(
-            rawSources.map((s: any) => {
-
+            rawSources.map((s: any, index: number) => {
               const metadata = s?.metadata ?? {};
 
-              const source =
-                metadata.document ??
-                  (metadata.source && metadata.source !== "blob" ? metadata.source : null) ??
-                  "Dokument";
+              // Dokumentname robust bestimmen
+              const documentName =
+                cleanValue(metadata.document) ??
+                cleanValue(metadata.fileName) ??
+                cleanValue(metadata.title) ??
+                (cleanValue(metadata.source) !== "blob"
+                  ? cleanValue(metadata.source)
+                  : null) ??
+                cleanValue(metadata.type) ??
+                "Dokument";
 
-              const page =
-                metadata?.loc?.lines?.from ??
+              // Echte Seitenzahl nur verwenden, wenn sie wirklich existiert
+              const realPage =
+                metadata?.page ??
+                metadata?.pageNumber ??
                 metadata?.loc?.pageNumber ??
-                "?";
+                null;
 
-              return [`${source}-${page}`, { source, page }];
+              // Falls keine echte Seite existiert: Zeilennummer als Fallback
+              const lineFrom =
+                metadata?.loc?.lines?.from ??
+                null;
+
+              const positionLabel =
+                realPage !== null && realPage !== undefined
+                  ? `Seite ${realPage}`
+                  : lineFrom !== null && lineFrom !== undefined
+                  ? `Zeile ${lineFrom}`
+                  : "ohne Positionsangabe";
+
+              return [
+                `${documentName}-${positionLabel}-${index}`,
+                {
+                  source: documentName.replaceAll("_", " "),
+                  positionLabel,
+                },
+              ];
             })
           ).values()
         ).slice(0, 3);
@@ -73,7 +97,7 @@ export default function Home() {
         sourcesText =
           "\n\nQuellen:\n" +
           uniqueSources
-            .map((s: any) => `• ${s.source} (Seite ${s.page})`)
+            .map((s: any) => `• ${s.source} (${s.positionLabel})`)
             .join("\n");
       }
 
@@ -81,7 +105,7 @@ export default function Home() {
         ...m,
         { role: "assistant", text: String(answer + sourcesText) },
       ]);
-    } catch (e) {
+    } catch {
       setMessages((m) => [
         ...m,
         { role: "assistant", text: "Fehler: Anfrage fehlgeschlagen." },
@@ -135,9 +159,7 @@ export default function Home() {
           messages.map((msg, i) => (
             <div key={i} style={{ marginBottom: 10 }}>
               <b>{msg.role === "user" ? "Du" : "Bot"}:</b>{" "}
-              <span style={{ whiteSpace: "pre-wrap" }}>
-                {msg.text}
-              </span>
+              <span style={{ whiteSpace: "pre-wrap" }}>{msg.text}</span>
             </div>
           ))
         )}
