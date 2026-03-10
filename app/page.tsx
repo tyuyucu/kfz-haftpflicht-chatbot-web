@@ -7,7 +7,12 @@ type ChatMsg = { role: "user" | "assistant"; text: string };
 
 function cleanValue(value: unknown): string | null {
   if (typeof value !== "string") return null;
-  const cleaned = value.trim().replace(/^"+|"+$/g, "");
+
+  const cleaned = value
+    .replace(/^"+|"+$/g, "")   // entfernt doppelte Quotes
+    .replace(/_/g, " ")        // ersetzt _
+    .trim();
+
   return cleaned.length > 0 ? cleaned : null;
 }
 
