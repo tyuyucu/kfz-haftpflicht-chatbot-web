@@ -56,9 +56,9 @@ export default function Home() {
               const metadata = s?.metadata ?? {};
 
               const source =
-                metadata.document ??
-                metadata.source ??
-                "Dokument";
+                metadata.source === "blob"
+                  ? metadata.document ?? "Dokument"
+                  : metadata.source ?? metadata.document ?? "Dokument";
 
               const page =
                 metadata?.loc?.lines?.from ??
