@@ -56,8 +56,7 @@ export default function Home() {
               const metadata = s?.metadata ?? {};
 
               const source =
-                metadata.source === "blob"
-                  ? metadata.document ?? "Dokument"
+                metadata.document ??
                   (metadata.source && metadata.source !== "blob" ? metadata.source : null) ??
                   "Dokument";
 
