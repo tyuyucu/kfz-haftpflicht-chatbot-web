@@ -15,6 +15,13 @@ function cleanValue(value: unknown): string | null {
   return cleaned.length > 0 ? cleaned : null;
 }
 
+function extractPageFromText(text: string | undefined): number | null {
+  if (!text) return null;
+
+  const match = text.match(/Seite\s+(\d+)/i);
+  return match ? Number(match[1]) : null;
+}
+
 export default function Home() {
   const [mode, setMode] = useState<Mode>("LERNEN");
   const [input, setInput] = useState("");
