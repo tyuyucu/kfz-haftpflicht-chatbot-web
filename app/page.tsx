@@ -62,12 +62,15 @@ export default function Home() {
               // Dokumentname sauber bestimmen
               let documentName =
                 cleanValue(metadata.document) ??
+                cleanValue(metadata['"document"']) ??
                 cleanValue(metadata.fileName) ??
                 cleanValue(metadata.title) ??
                 cleanValue(metadata.type);
 
               // source nur verwenden wenn nicht blob
-              const sourceVal = cleanValue(metadata.source);
+              const sourceVal = 
+                cleanValue(metadata.source) ??
+                cleanValue['"source"']);
               if (!documentName && sourceVal && sourceVal !== "blob") {
                 documentName = sourceVal;
               }
