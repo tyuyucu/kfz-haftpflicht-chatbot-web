@@ -10,12 +10,8 @@ function cleanValue(value: unknown): string | null {
 
   let cleaned = String(value);
 
-  // doppelte Anführungszeichen entfernen
   cleaned = cleaned.replace(/"/g, "");
-
-  // underscores schöner darstellen
   cleaned = cleaned.replace(/_/g, " ");
-
   cleaned = cleaned.trim();
 
   return cleaned.length > 0 ? cleaned : null;
@@ -63,25 +59,31 @@ export default function Home() {
             rawSources.map((s: any, index: number) => {
               const metadata = s?.metadata ?? {};
 
-              // Dokumentname robust bestimmen
-              const documentName =
+              // Dokumentname sauber bestimmen
+              let documentName =
                 cleanValue(metadata.document) ??
                 cleanValue(metadata.fileName) ??
                 cleanValue(metadata.title) ??
-                (cleanValue(metadata.source) !== "blob"
-                  ? cleanValue(metadata.source)
-                  : null) ??
-                cleanValue(metadata.type) ??
-                "Dokument";
+                cleanValue(metadata.type);
 
-              // Echte Seitenzahl nur verwenden, wenn sie wirklich existiert
+              // source nur verwenden wenn nicht blob
+              const sourceVal = cleanValue(metadata.source);
+              if (!documentName && sourceVal && sourceVal !== "blob") {
+                documentName = sourceVal;
+              }
+
+              if (!documentName) {
+                documentName = "Dokument";
+              }
+
+              // Seitenzahl bestimmen
               const realPage =
                 metadata?.page ??
                 metadata?.pageNumber ??
                 metadata?.loc?.pageNumber ??
                 null;
 
-              // Falls keine echte Seite existiert: Zeilennummer als Fallback
+              // Zeilennummer fallback
               const lineFrom =
                 metadata?.loc?.lines?.from ??
                 null;
@@ -96,7 +98,7 @@ export default function Home() {
               return [
                 `${documentName}-${positionLabel}-${index}`,
                 {
-                  source: documentName.replaceAll("_", " "),
+                  source: documentName,
                   positionLabel,
                 },
               ];
