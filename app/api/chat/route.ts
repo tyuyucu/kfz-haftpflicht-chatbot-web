@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     }
 
     // Session Cookie lesen
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     let sessionId = cookieStore.get("sessionId")?.value;
 
     const isNewSession = !sessionId;
@@ -28,10 +28,11 @@ export async function POST(req: Request) {
 
     if (mode === "QUIZ") {
       flowiseUrl = process.env.FLOWISE_QUIZ_URL;
-    } else if (mode === "SPARRING") {
+    } 
+    else if (mode === "SPARRING") {
       flowiseUrl = process.env.FLOWISE_SPARRING_URL;
-    } else {
-      // Default = Lernen (RAG)
+    } 
+    else {
       flowiseUrl = process.env.FLOWISE_RAG_URL;
     }
 
@@ -59,10 +60,7 @@ export async function POST(req: Request) {
 
     const data = await flowiseRes.json();
 
-    // ==============================
-    // FLOWISE RESPONSE NORMALISIEREN
-    // ==============================
-
+    // Flowise Response normalisieren
     const text =
       data?.text ??
       data?.response ??
@@ -80,7 +78,6 @@ export async function POST(req: Request) {
       sources,
     });
 
-    // Session Cookie setzen
     if (isNewSession) {
       response.cookies.set("sessionId", sessionId, {
         httpOnly: true,
