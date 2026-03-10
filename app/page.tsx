@@ -63,22 +63,16 @@ export default function Home() {
                 cleanValue(metadata.type) ??
                 "Dokument";
 
-              const page =
+              const detectedPage =
                 metadata?.page ??
                 metadata?.pageNumber ??
                 metadata?.loc?.pageNumber ??
-                null;
-
-              const line =
-                metadata?.loc?.lines?.from ??
-                null;
+                extractPageFromText(s.pageContent);
 
               const positionLabel =
-                page !== null
-                  ? `Seite ${page}`
-                  : line !== null
-                  ? `Zeile ${line}`
-                  : "ohne Positionsangabe";
+                detectedPage !== null
+                  ? `Seite ${detectedPage}`
+                  : "Seite unbekannt";
 
               const key = `${documentName}-${positionLabel}`;
 
