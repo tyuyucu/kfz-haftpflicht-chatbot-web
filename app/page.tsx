@@ -37,13 +37,11 @@ export default function Home() {
         data?.response ??
         "Keine Antwort erhalten.";
 
-      // ===== Quellenlogik =====
-
       let sourcesText = "";
 
       const rawSources =
-        data?.sourceDocuments ??
         data?.sources ??
+        data?.sourceDocuments ??
         [];
 
       if (
@@ -54,20 +52,17 @@ export default function Home() {
         const uniqueSources = Array.from(
           new Map(
             rawSources.map((s: any) => {
-              const rawSource =
-                s?.metadata?.document ??
-                s?.metadata?.source ??
-                s?.metadata?.fileName ??
-                s?.metadata?.title ??
-                "Dokument";
+
+              const metadata = s?.metadata ?? {};
 
               const source =
-                rawSource === "blob" ? "Dokument" : rawSource;
+                metadata.document ??
+                metadata.source ??
+                "Dokument";
 
               const page =
-                s?.metadata?.page ??
-                s?.metadata?.loc?.pageNumber ??
-                s?.metadata?.pageNumber ??
+                metadata?.loc?.lines?.from ??
+                metadata?.loc?.pageNumber ??
                 "?";
 
               return [`${source}-${page}`, { source, page }];
