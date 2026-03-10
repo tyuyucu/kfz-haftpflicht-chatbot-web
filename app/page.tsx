@@ -6,12 +6,17 @@ type Mode = "QUIZ" | "LERNEN" | "SPARRING";
 type ChatMsg = { role: "user" | "assistant"; text: string };
 
 function cleanValue(value: unknown): string | null {
-  if (typeof value !== "string") return null;
+  if (!value) return null;
 
-  const cleaned = value
-    .replace(/^"+|"+$/g, "")   // entfernt doppelte Quotes
-    .replace(/_/g, " ")        // ersetzt _
-    .trim();
+  let cleaned = String(value);
+
+  // doppelte Anführungszeichen entfernen
+  cleaned = cleaned.replace(/"/g, "");
+
+  // underscores schöner darstellen
+  cleaned = cleaned.replace(/_/g, " ");
+
+  cleaned = cleaned.trim();
 
   return cleaned.length > 0 ? cleaned : null;
 }
