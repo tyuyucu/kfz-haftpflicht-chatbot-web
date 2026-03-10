@@ -60,23 +60,14 @@ export async function POST(req: Request) {
 
     const data = await flowiseRes.json();
 
-    // Flowise Response normalisieren
-    const text =
-      data?.text ??
-      data?.response ??
-      data?.answer ??
-      "Keine Antwort erhalten.";
-
-    const sources =
-      data?.sourceDocuments ??
-      data?.json?.sourceDocuments ??
-      data?.metadata?.sourceDocuments ??
-      [];
-
-    const response = NextResponse.json({
-      text,
-      sources,
-    });
+const response = NextResponse.json({
+  text: data.text ?? data.response ?? "Keine Antwort erhalten.",
+  sources:
+    data.sourceDocuments ??
+    data?.metadata?.sourceDocuments ??
+    data?.documents ??
+    [],
+});
 
     if (isNewSession) {
       response.cookies.set("sessionId", sessionId, {
