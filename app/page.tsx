@@ -22,6 +22,18 @@ function extractPageFromText(text: string | undefined): number | null {
   return match ? Number(match[1]) : null;
 }
 
+function parseValidPage(value: unknown): number | null {
+  if (value === null || value === undefined) return null;
+
+  // Platzhalter wie "{page}" ignorieren
+  if (typeof value === "string" && value.includes("{page}")) {
+    return null;
+  }
+
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+}
+
 export default function Home() {
   const [mode, setMode] = useState<Mode>("LERNEN");
   const [input, setInput] = useState("");
@@ -55,7 +67,6 @@ export default function Home() {
         "Keine Antwort erhalten.";
 
       let sourcesText = "";
-
       const rawSources = data?.sources ?? data?.sourceDocuments ?? [];
 
       if (mode === "LERNEN" && Array.isArray(rawSources) && rawSources.length > 0) {
@@ -71,10 +82,10 @@ export default function Home() {
                 "Dokument";
 
               const detectedPage =
-                metadata?.page ??
-                metadata?.pageNumber ??
-                metadata?.loc?.pageNumber ??
-                extractPageFromText(s.pageContent);
+                parseValidPage(metadata?.page) ??
+                parseValidPage(metadata?.pageNumber) ??
+                parseValidPage(metadata?.loc?.pageNumber) ??
+                extractPageFromText(s?.pageContent);
 
               const positionLabel =
                 detectedPage !== null
