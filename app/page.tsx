@@ -9,8 +9,6 @@ function cleanValue(value: unknown): string | null {
   if (!value) return null;
 
   let cleaned = String(value);
-
-  cleaned = cleaned.replace(/"/g, "");
   cleaned = cleaned.replace(/_/g, " ");
   cleaned = cleaned.trim();
 
@@ -56,50 +54,36 @@ export default function Home() {
       if (mode === "LERNEN" && Array.isArray(rawSources) && rawSources.length > 0) {
         const uniqueSources = Array.from(
           new Map(
-            rawSources.map((s: any, index: number) => {
+            rawSources.map((s: any) => {
               const metadata = s?.metadata ?? {};
 
-              // Dokumentname sauber bestimmen
-              let documentName =
+              const documentName =
                 cleanValue(metadata.document) ??
-                cleanValue(metadata['"document"']) ??
-                cleanValue(metadata.fileName) ??
-                cleanValue(metadata.title) ??
-                cleanValue(metadata.type);
-
-              // source nur verwenden wenn nicht blob
-              const sourceVal = 
                 cleanValue(metadata.source) ??
-                cleanValue['"source"']);
-              if (!documentName && sourceVal && sourceVal !== "blob") {
-                documentName = sourceVal;
-              }
+                cleanValue(metadata.type) ??
+                "Dokument";
 
-              if (!documentName) {
-                documentName = "Dokument";
-              }
-
-              // Seitenzahl bestimmen
-              const realPage =
+              const page =
                 metadata?.page ??
                 metadata?.pageNumber ??
                 metadata?.loc?.pageNumber ??
                 null;
 
-              // Zeilennummer fallback
-              const lineFrom =
+              const line =
                 metadata?.loc?.lines?.from ??
                 null;
 
               const positionLabel =
-                realPage !== null && realPage !== undefined
-                  ? `Seite ${realPage}`
-                  : lineFrom !== null && lineFrom !== undefined
-                  ? `Zeile ${lineFrom}`
+                page !== null
+                  ? `Seite ${page}`
+                  : line !== null
+                  ? `Zeile ${line}`
                   : "ohne Positionsangabe";
 
+              const key = `${documentName}-${positionLabel}`;
+
               return [
-                `${documentName}-${positionLabel}-${index}`,
+                key,
                 {
                   source: documentName,
                   positionLabel,
@@ -118,7 +102,7 @@ export default function Home() {
 
       setMessages((m) => [
         ...m,
-        { role: "assistant", text: String(answer + sourcesText) },
+        { role: "assistant", text: answer + sourcesText },
       ]);
     } catch {
       setMessages((m) => [
@@ -174,7 +158,7 @@ export default function Home() {
           messages.map((msg, i) => (
             <div key={i} style={{ marginBottom: 10 }}>
               <b>{msg.role === "user" ? "Du" : "Bot"}:</b>{" "}
-              <span style={{ whiteSpace: "pre-wrap" }}>{msg.text}</span>
+              <span>{msg.text}</span>
             </div>
           ))
         )}
