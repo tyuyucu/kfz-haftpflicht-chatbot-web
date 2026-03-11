@@ -25,13 +25,21 @@ function extractPageFromText(text: string | undefined): number | null {
 function parseValidPage(value: unknown): number | null {
   if (value === null || value === undefined) return null;
 
-  // Platzhalter wie "{page}" ignorieren
   if (typeof value === "string" && value.includes("{page}")) {
     return null;
   }
 
   const num = Number(value);
   return Number.isFinite(num) ? num : null;
+}
+
+function detectPage(metadata: any, pageContent: string | undefined): number | null {
+  return (
+    parseValidPage(metadata?.loc?.pageNumber) ??
+    parseValidPage(metadata?.page) ??
+    parseValidPage(metadata?.pageNumber) ??
+    extractPageFromText(pageContent)
+  );
 }
 
 export default function Home() {
@@ -69,7 +77,12 @@ export default function Home() {
       let sourcesText = "";
       const rawSources = data?.sources ?? data?.sourceDocuments ?? [];
 
-      if (mode === "LERNEN" && Array.isArray(rawSources) && rawSources.length > 0) {
+      if (
+        mode === "LERNEN" &&
+        Array.isArray(rawSources) &&
+        rawSources.length > 0 &&
+        !answer.includes("Keine relevanten Informationen")
+      ) {
         const uniqueSources = Array.from(
           new Map(
             rawSources.map((s: any) => {
@@ -81,11 +94,7 @@ export default function Home() {
                 cleanValue(metadata.type) ??
                 "Dokument";
 
-              const detectedPage =
-                parseValidPage(metadata?.page) ??
-                parseValidPage(metadata?.pageNumber) ??
-                parseValidPage(metadata?.loc?.pageNumber) ??
-                extractPageFromText(s?.pageContent);
+              const detectedPage = detectPage(metadata, s?.pageContent);
 
               const positionLabel =
                 detectedPage !== null
